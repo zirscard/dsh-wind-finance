@@ -1,0 +1,48 @@
+{
+  "name": "dsh-wind-finance",
+  "version": "0.1.0",
+  "description": "Wind financial-analysis capability as one standalone bundle: registers a wind_finance agent tool that routes a question to the right Wind data domain, executes it over the Wind meta-router MCP endpoint (or the per-domain CLI in batch mode), and keeps a per-day receipt so the same dataset is not pulled twice against one shared daily quota.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "runner.js",
+    "core/",
+    "SKILL.md",
+    "README.md",
+    "cordis.patch.yml",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "wind",
+    "finance",
+    "market-data",
+    "equity-research",
+    "valuation",
+    "mcp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zirscard/dsh-wind-finance.git"
+  },
+  "homepage": "https://github.com/zirscard/dsh-wind-finance#readme",
+  "bugs": {
+    "url": "https://github.com/zirscard/dsh-wind-finance/issues"
+  }
+}

@@ -1,0 +1,7 @@
+# dsh-wind-finance bundle patch: one host-only row (agent tool + system-prompt section).
+# The Wind endpoint and its credential are NOT declared here on purpose: the
+# credential lives in the environment (WIND_API_KEY) and the host profile layer
+# owns endpoint configuration. This bundle only adds the capability logic.
+- insert:
+    - id: dsh-wind-finance
+      name: dsh-wind-finance

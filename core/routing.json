@@ -1,0 +1,110 @@
+{
+  "version": "1.0.0",
+  "description": "Wind routing table. One meta-router endpoint dispatches to seven data domains. The interactive channel is the MCP meta-router; the batch channel is the per-domain CLI. Both spend the same daily quota.",
+  "channels": {
+    "interactive": {
+      "transport": "streamable-http",
+      "endpoint": "https://mcp.wind.com.cn/vserver_wind_tools/mcp/",
+      "tools": ["market_search_tools", "market_call_tool"],
+      "use": "conversational lookups — agent calls market_search_tools to locate the right Wind tool, then market_call_tool to run it"
+    },
+    "batch": {
+      "transport": "stdio",
+      "command": "node scripts/cli.mjs call <server_type> <tool_name> '<params_json>'",
+      "use": "scheduled jobs and scripts that cannot reach MCP tools"
+    }
+  },
+  "domains": {
+    "stock_data": {
+      "covers": "stock screening, quotes, K-line, intraday quotes, company profile, financials, shareholders, events, technicals, risk",
+      "tools": [
+        "search_stocks",
+        "get_stock_price_indicators",
+        "get_stock_quote",
+        "get_stock_kline",
+        "get_stock_basicinfo",
+        "get_stock_fundamentals",
+        "get_stock_equity_holders",
+        "get_stock_events",
+        "get_stock_technicals",
+        "get_risk_metrics"
+      ]
+    },
+    "fund_data": {
+      "covers": "fund / ETF / LOF screening, quotes, K-line, intraday quotes, profile, financials, holdings, performance, holders, company",
+      "tools": [
+        "search_funds",
+        "get_fund_price_indicators",
+        "get_fund_quote",
+        "get_fund_kline",
+        "get_fund_info",
+        "get_fund_financials",
+        "get_fund_holdings",
+        "get_fund_performance",
+        "get_fund_holders",
+        "get_fund_company_info"
+      ]
+    },
+    "index_data": {
+      "covers": "index and sector quotes, K-line, intraday quotes, profile, fundamentals, technicals",
+      "tools": [
+        "get_index_price_indicators",
+        "get_index_quote",
+        "get_index_kline",
+        "get_index_basicinfo",
+        "get_index_fundamentals",
+        "get_index_technicals"
+      ]
+    },
+    "bond_data": {
+      "covers": "bond profile, issuer, market valuation, issuer financials",
+      "tools": [
+        "get_bond_basicinfo",
+        "get_bond_issuer_info",
+        "get_bond_market_data",
+        "get_bond_financial_data"
+      ]
+    },
+    "financial_docs": {
+      "covers": "announcements, annual and quarterly reports, prospectuses, financial news",
+      "tools": ["get_company_announcements", "get_financial_news"]
+    },
+    "economic_data": {
+      "covers": "macro, industry and FX indicators",
+      "tools": ["search_economic_indicator", "query_economic_indicator_data"]
+    },
+    "analytics_data": {
+      "covers": "cross-instrument aggregation, weighted averages, rankings, derived composite metrics",
+      "tools": ["get_financial_data"]
+    }
+  },
+  "arbitration": [
+    "Announcements, annual/quarterly reports, prospectuses, regulatory disclosure -> financial_docs.get_company_announcements",
+    "News, flashes, commentary -> financial_docs.get_financial_news",
+    "Macro, industry or FX EDB indicators (even without the word macro) -> economic_data.search_economic_indicator to confirm the code, economic_data.query_economic_indicator_data for the numeric series",
+    "Screening request without a named instrument -> the matching domain's search_* tool",
+    "Last price, change, volume, K-line, intraday line, range performance -> the matching domain's quote / K-line tool; historical ranges always go through K-line",
+    "Financials, share capital, shareholders, events, technicals, risk, holdings, performance -> the matching domain's natural-language tool"
+  ],
+  "guardrails": [
+    "Do not answer a financial fact with web search, a public web page, or model memory. Wind data only.",
+    "analytics_data is not the entry point for complex questions and not a bulk-quote entry point. Quotes, K-line and price metrics always go to the dedicated tool; split a large instrument list into several calls.",
+    "Units and magnitude come from the response metadata (data.unit, column unit, meta.unit / meta.magnitude). Never convert a value yourself; if the metadata gives no unit, keep the raw value and say the unit is unknown.",
+    "When the instrument cannot be resolved, ask for the full name or the Wind code. Never guess a code or append an exchange suffix.",
+    "Never fall back to analytics_data to paper over an authentication, quota, network or routing failure."
+  ],
+  "discipline": [
+    "One dataset, one pull per day: check the daily receipt before pulling; reuse the cached result instead of calling again.",
+    "Interactive lookups go through the meta-router MCP; the per-domain CLI is for scripts and scheduled jobs only.",
+    "The MCP channel and the CLI share one API key and one daily quota. They are not two allowances."
+  ],
+  "completion_states": [
+    "DONE",
+    "DONE_WITH_LIMITS",
+    "NO_RESULTS",
+    "BLOCKED_KEY",
+    "BLOCKED_QUOTA",
+    "BLOCKED_RUNTIME",
+    "OUT_OF_SCOPE"
+  ]
+}
